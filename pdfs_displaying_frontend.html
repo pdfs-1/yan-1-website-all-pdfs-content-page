@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -11,9 +10,9 @@
         rel="stylesheet"/>
 
   <style>
-    /* ------------------------------------------------------------------
+    /* --------------------------------------------------------------
        General layout & theme
-    ------------------------------------------------------------------- */
+    -------------------------------------------------------------- */
     * { box-sizing:border-box; margin:0; padding:0; }
 
     body {
@@ -36,6 +35,91 @@
       letter-spacing:1px;
     }
 
+    /* --------------------------------------------------------------
+       Search bar (single bar with back‑button & toggle)
+    -------------------------------------------------------------- */
+    .search-wrapper{
+      position:relative;
+      width:92%; max-width:1300px;
+      margin-top:12px;
+      display:flex; align-items:center; gap:8px;
+    }
+    .search-wrapper input{
+      flex:1;
+      padding:6px 8px;
+      border-radius:4px;
+      border:none;
+      font-size:0.9rem;
+      background:#1e293b;
+      color:#fff;
+    }
+    .search-wrapper button{
+      background:#60a5fa;
+      color:#fff;
+      border:none;
+      border-radius:4px;
+      padding:6px 8px;
+      cursor:pointer;
+      font-size:0.85rem;
+    }
+    .search-wrapper .back-btn{
+      background:#64748b;
+      color:#fff;
+      border:none;
+      border-radius:4px;
+      width:28px; height:28px;
+      font-size:0.9rem;
+      display:flex; align-items:center; justify-content:center;
+      cursor:pointer;
+    }
+    .search-wrapper .back-btn.hidden{ display:none; }
+    .search-wrapper .toggle-options{
+      background:#64748b;
+      color:#fff;
+      border:none;
+      border-radius:4px;
+      width:28px; height:28px;
+      font-size:0.9rem;
+      display:flex; align-items:center; justify-content:center;
+      cursor:pointer;
+    }
+    .search-wrapper .upload-btn{
+      background:#64748b;
+    }
+
+    .search-options{
+      position:absolute;
+      top:100%; right:0;
+      background:#1e293b;
+      padding:6px 8px;
+      border-radius:6px;
+      display:flex; align-items:center; gap:8px;
+      margin-top:4px;
+      box-shadow:0 4px 12px rgba(0,0,0,.5);
+    }
+    .search-options.hidden{ display:none; }
+    .search-options select{
+      padding:4px 6px;
+      border-radius:4px;
+      border:none;
+      background:#0f172a;
+      color:#fff;
+      font-size:0.85rem;
+    }
+    .search-options .close-options{
+      background:#ef4444;
+      color:#fff;
+      border:none;
+      border-radius:4px;
+      width:24px; height:24px;
+      font-size:0.9rem;
+      cursor:pointer;
+      display:flex; align-items:center; justify-content:center;
+    }
+
+    /* --------------------------------------------------------------
+       Feed & cards
+    -------------------------------------------------------------- */
     #feed{
       display:grid;
       grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
@@ -64,8 +148,21 @@
       background:#1e293b;
       display:flex; align-items:center; justify-content:center;
       color:#94a3b8; font-size:.9em;
+      position:relative;
     }
     .preview iframe{ width:100%; height:100%; border:none; }
+
+    .share-btn{
+      position:absolute;
+      top:4px; right:4px;
+      background:rgba(0,0,0,.5);
+      border:none; color:#fff;
+      font-size:0.85rem;
+      border-radius:4px;
+      padding:2px 4px;
+      cursor:pointer;
+    }
+    .share-btn:hover{ background:rgba(0,0,0,.7); }
 
     .info{ margin-top:10px; }
     .title{
@@ -97,9 +194,9 @@
     }
     @keyframes spin{ from{transform:rotate(0)} to{transform:rotate(360deg)} }
 
-    /* ------------------------------------------------------------------
-       Full‑screen PDF viewer
-    ------------------------------------------------------------------- */
+    /* --------------------------------------------------------------
+       Full‑screen PDF / Upload viewer
+    -------------------------------------------------------------- */
     .pdf-viewer{
       position:fixed; top:0; left:0;
       width:100vw; height:100vh;
@@ -130,37 +227,9 @@
       flex-grow:1; border:none; width:100%; height:100%;
     }
 
-    /* ------------------------------------------------------------------
-       Modal (watch‑ad popup)
-    ------------------------------------------------------------------- */
-    .modal{
-      position:fixed; top:0; left:0;
-      width:100vw; height:100vh;
-      background:rgba(0,0,0,.6);
-      display:none; justify-content:center; align-items:center;
-      z-index:1000;
-    }
-    .modal-content{
-      background:#1e293b;
-      padding:20px; border-radius:12px;
-      text-align:center; max-width:90%;
-    }
-    .modal-content p{
-      color:#f8fafc; margin-bottom:15px;
-    }
-    .modal-content button{
-      margin:5px; padding:10px 20px;
-      border:none; border-radius:6px;
-      font-size:.95em; cursor:pointer;
-    }
-    .btn-watch{ background:#60a5fa; color:#fff; }
-    .btn-watch:hover{ background:#3b82f6; }
-    .btn-cancel{ background:#64748b; color:#fff; }
-    .btn-cancel:hover{ background:#475569; }
-
-    /* ------------------------------------------------------------------
+    /* --------------------------------------------------------------
        Responsiveness
-    ------------------------------------------------------------------- */
+    -------------------------------------------------------------- */
     @media(max-width:768px){
       header{font-size:1.3em;padding:12px}
       .open-btn{font-size:.9em;padding:8px}
@@ -173,37 +242,34 @@
       .title{font-size:.95em}
       .pdf-toolbar h2{font-size:.9em}
       .close-full{width:32px;height:32px;font-size:1em}
+      .search-wrapper{flex-wrap:wrap}
+      .search-wrapper input{order:2; flex-basis:100%; margin-top:4px;}
     }
   </style>
 </head>
 <body>
-  <!-- ------------------------------------------------------------
-       DEBUG PANEL – appears when you tap the tiny “🪵 Debug” button.
-       ------------------------------------------------------------ -->
-  <div id="debugPanel" style="
-        position:fixed; top:0; left:0; right:0; height:200px;
-        background:rgba(0,0,0,0.85); color:#0f0; font-family:monospace;
-        font-size:12px; line-height:1.3; overflow-y:auto; z-index:9999;
-        display:none; padding:8px 8px 30px 8px;">
-    <button id="debugCloseBtn" style="
-        position:absolute; top:4px; right:4px;
-        background:#222; color:#fff; border:none; padding:2px 6px;
-        font-size:10px; cursor:pointer;">✕</button>
-    <div id="debugLog"></div>
+  <!-- Header (empty – title removed) -->
+  <header></header>
+
+  <!-- Search bar (single) -->
+  <div class="search-wrapper">
+    <button id="backBtn" class="back-btn hidden">←</button>
+    <input type="text" id="searchInput" placeholder="Search title…" />
+    <button id="searchBtn">Search</button>
+    <!-- The upload button will be inserted here by script -->
+    <button id="toggleOptions" class="toggle-options">→</button>
+
+    <div id="searchOptions" class="search-options hidden">
+      <select id="searchField">
+        <option value="title">Title</option>
+        <option value="id">ID</option>
+        <option value="username">Username</option>
+      </select>
+      <button id="closeOptions" class="close-options">✕</button>
+    </div>
   </div>
 
-  <!-- tiny button that opens the panel -->
-  <button id="debugOpenBtn" style="
-        position:fixed; bottom:12px; right:12px;
-        background:#222; color:#0f0; border:none; border-radius:4px;
-        padding:6px 10px; font-size:12px; cursor:pointer;
-        z-index:9999;">🪵 Debug</button>
-
-  <!-- ------------------------------------------------------------------
-       THE ORIGINAL UI (header, feed, loader, footer, viewer, modal)
-       ------------------------------------------------------------------ -->
-  <header>📚 PDF Stream</header>
-
+  <!-- Feed & loader -->
   <div id="feed"></div>
   <div id="loader" class="loader"></div>
 
@@ -218,199 +284,18 @@
     <iframe id="pdfFrame" class="pdf-iframe" src=""></iframe>
   </div>
 
-  <!-- Watch‑Ad modal -->
-  <div id="adModal" class="modal">
-    <div class="modal-content">
-      <p>Watch an ad to view this PDF</p>
-      <button id="watchAdBtn" class="btn-watch">Watch Ad</button>
-      <button id="cancelBtn" class="btn-cancel">Cancel</button>
+  <!-- Full‑screen upload viewer -->
+  <div id="uploadOverlay" class="pdf-viewer">
+    <div class="pdf-toolbar">
+      <h2>Upload PDF</h2>
+      <button class="close-full" id="closeUpload">&times;</button>
     </div>
+    <iframe id="uploadFrame" class="pdf-iframe" src=""></iframe>
   </div>
 
-  <!-- ------------------------------------------------------------
-       DEBUGGER SCRIPT – wraps console, Android bridge, network and
-       then runs the original app logic.
-       ------------------------------------------------------------ -->
   <script>
     (function () {
-      /* --------------------------------------------------------
-         0️⃣  Helper – write a line to the on‑page panel
-               and forward to the real console.
-         -------------------------------------------------------- */
-      const LOG_CONTAINER = document.getElementById('debugLog');
-
-      function dLog(...args) {
-        // forward to original console (so Logcat still sees it)
-        console.__origLog.apply(console, args);
-        // write to the UI panel
-        const line = document.createElement('div');
-        line.textContent = args.map(a => {
-          try { return typeof a === 'object' ? JSON.stringify(a) : String(a); }
-          catch (e) { return String(a); }
-        }).join(' ');
-        LOG_CONTAINER.appendChild(line);
-        LOG_CONTAINER.scrollTop = LOG_CONTAINER.scrollHeight;
-      }
-
-      /* --------------------------------------------------------
-         Preserve the original console methods.
-         -------------------------------------------------------- */
-      console.__origLog   = console.log   || function () {};
-      console.__origWarn  = console.warn  || function () {};
-      console.__origError = console.error || function () {};
-      console.__origInfo  = console.info  || function () {};
-
-      /* --------------------------------------------------------
-         Override console.* so every call appears in the panel.
-         -------------------------------------------------------- */
-      console.log   = (...a) => dLog('[LOG]',   ...a);
-      console.warn  = (...a) => dLog('[WARN]',  ...a);
-      console.error = (...a) => dLog('[ERR]',   ...a);
-      console.info  = (...a) => dLog('[INFO]',  ...a);
-
-      /* --------------------------------------------------------
-         UI – open / close the debug panel.
-         -------------------------------------------------------- */
-      const panel    = document.getElementById('debugPanel');
-      const openBtn  = document.getElementById('debugOpenBtn');
-      const closeBtn = document.getElementById('debugCloseBtn');
-
-      openBtn.addEventListener('click', () => panel.style.display = 'block');
-      closeBtn.addEventListener('click', () => panel.style.display = 'none');
-
-      /* --------------------------------------------------------
-         1️⃣  Wrap the Android bridge (if it exists) and log every call.
-         -------------------------------------------------------- */
-      if (window.Android) {
-        const orig = {
-          requestRewardedAd   : window.Android.requestRewardedAd,
-          preloadRewardedAd   : window.Android.preloadRewardedAd,
-          loadUrlInWebView    : window.Android.loadUrlInWebView,
-          getAndroidId        : window.Android.getAndroidId
-        };
-
-        const wrap = (name, fn) => (...args) => {
-          console.log(`🔹 Android.${name} called with`, ...args);
-          const ret = fn.apply(window.Android, args);
-          if (ret !== undefined) {
-            console.log(`🔹 Android.${name} returned →`, ret);
-          }
-          return ret;
-        };
-
-        window.Android.requestRewardedAd   = wrap('requestRewardedAd',   orig.requestRewardedAd);
-        window.Android.preloadRewardedAd   = wrap('preloadRewardedAd',   orig.preloadRewardedAd);
-        window.Android.loadUrlInWebView    = wrap('loadUrlInWebView',    orig.loadUrlInWebView);
-        window.Android.getAndroidId        = wrap('getAndroidId',        orig.getAndroidId);
-      } else {
-        console.warn('⚠️ No Android bridge detected – running in a browser');
-      }
-
-      /* --------------------------------------------------------
-         2️⃣  Intercept the callbacks that Android will call.
-         -------------------------------------------------------- */
-      // If the app (or another script) defined any of these before us,
-      // we preserve them and call them after our own handling.
-      const _origOnAdPreloaded       = window.onAdPreloaded       || function () {};
-      const _origOnAdFailedToPreload = window.onAdFailedToPreload || function () {};
-      const _origOnAdNotAvailable    = window.onAdNotAvailable    || function () {};
-      const _origOnAdCompleted       = window.onAdCompleted       || function () {};
-
-      window.onAdPreloaded = function () {
-        console.log('✅ onAdPreloaded');
-        _origOnAdPreloaded();
-      };
-      window.onAdFailedToPreload = function () {
-        console.warn('⚠️ onAdFailedToPreload');
-        _origOnAdFailedToPreload();
-      };
-
-      /* --------------------------------------------------------
-         The two callbacks we really care about – we replace them
-         with our own logic (they still call any previously‑defined
-         callbacks via the variables above).
-         -------------------------------------------------------- */
-      window.onAdNotAvailable = function () {
-        console.warn('⚠️ rewarded ad not available – opening PDF directly');
-        if (pendingPayload) {
-          openFullscreenPDF(pendingPayload.title, pendingPayload.url);
-          pendingPayload = null;
-        }
-        adInProgress = false; // unlock
-        _origOnAdNotAvailable();
-      };
-
-      window.onAdCompleted = function (tag) {
-        console.log('✅ onAdCompleted, tag =', tag);
-        try {
-          const payload = JSON.parse(tag);
-          openFullscreenPDF(payload.title, payload.url);
-        } catch (e) {
-          console.error('❌ parse error in onAdCompleted →', e);
-          // Fallback to whatever we still have stored
-          if (pendingPayload) {
-            openFullscreenPDF(pendingPayload.title, pendingPayload.url);
-          }
-        }
-        pendingPayload = null;
-        adInProgress = false; // unlock
-        _origOnAdCompleted(tag);
-      };
-
-      /* --------------------------------------------------------
-         3️⃣  Intercept network – fetch() and XHR (Archive.org uses XHR)
-         -------------------------------------------------------- */
-      // ---- fetch -------------------------------------------------
-      const origFetch = window.fetch;
-      window.fetch = function (...args) {
-        console.log('🔗 fetch →', ...args);
-        return origFetch.apply(this, args)
-          .then(resp => {
-            console.log('🔗 fetch response →', {
-              url: resp.url,
-              status: resp.status,
-              ok: resp.ok,
-              type: resp.type
-            });
-            return resp;
-          })
-          .catch(err => {
-            console.error('🔗 fetch error →', err);
-            throw err;
-          });
-      };
-
-      // ---- XHR ---------------------------------------------------
-      const origOpen = XMLHttpRequest.prototype.open;
-      XMLHttpRequest.prototype.open = function (method, url, async, user, pwd) {
-        this.__debugInfo = { method, url };
-        console.log('🔗 XHR open →', method, url);
-        return origOpen.apply(this, arguments);
-      };
-      const origSend = XMLHttpRequest.prototype.send;
-      XMLHttpRequest.prototype.send = function (body) {
-        const info = this.__debugInfo || {};
-        console.log('🔗 XHR send →', info.method, info.url, 'body:', body);
-        this.addEventListener('load', function () {
-          console.log('🔗 XHR load →', {
-            url: info.url,
-            status: this.status,
-            responseURL: this.responseURL,
-            responseSnippet: this.responseText?.slice(0, 200)
-          });
-        });
-        this.addEventListener('error', function () {
-          console.error('🔗 XHR error →', info.url);
-        });
-        return origSend.apply(this, arguments);
-      };
-
-      /* --------------------------------------------------------
-         4️⃣  ORIGINAL APP LOGIC (now augmented with ad‑lock &
-              payload handling).
-         -------------------------------------------------------- */
-
-      // ------------------- Global elements / state -------------------
+      /* ----------------- Global elements & state ----------------- */
       const FEED          = document.getElementById('feed');
       const LOADER        = document.getElementById('loader');
       const VIEWER        = document.getElementById('pdfViewer');
@@ -418,128 +303,43 @@
       const PDF_TITLE     = document.getElementById('pdfTitle');
       const CLOSE_VIEWER  = document.getElementById('closeViewer');
 
-      const AD_MODAL      = document.getElementById('adModal');
-      const WATCH_BTN     = document.getElementById('watchAdBtn');
-      const CANCEL_BTN    = document.getElementById('cancelBtn');
+      const UPLOAD_OVERLAY = document.getElementById('uploadOverlay');
+      const UPLOAD_FRAME   = document.getElementById('uploadFrame');
+      const CLOSE_UPLOAD   = document.getElementById('closeUpload');
 
-      const BACKEND_URL   = 'https://pdfs_displaying_backend.video-api-ajaiahar.workers.dev';
+      const SEARCH_INPUT   = document.getElementById('searchInput');
+      const SEARCH_BTN     = document.getElementById('searchBtn');
+      const BACK_BTN       = document.getElementById('backBtn');
+      const TOGGLE_BTN     = document.getElementById('toggleOptions');
+      const SEARCH_OPTIONS = document.getElementById('searchOptions');
+      const SEARCH_FIELD   = document.getElementById('searchField');
+      const CLOSE_OPTIONS  = document.getElementById('closeOptions');
 
-      let allData = [], currentIndex = 0;
+      const BACKEND_URL    = 'https://pdfs_displaying_backend.video-api-ajaiahar.workers.dev';
+
+      let allData   = [], currentIndex = 0;
       const BATCH_SIZE = 30;
       let loadingMore = false;
+      let searchMode = false;
 
-      // Holds the data for the PDF that the user wants to view.
-      let pendingPayload = null;   // {title:string, url:string}
-      // Prevent multiple ad requests while one is already in flight.
-      let adInProgress = false;
-
-      // -----------------------------------------------------------------
-      // Helper – open PDF in the full‑screen viewer
-      // -----------------------------------------------------------------
+      /* ----------------- Helper: open PDF full‑screen ----------------- */
       function openFullscreenPDF(title, url) {
-        if (!url) {
-          console.warn('openFullscreenPDF called with empty URL');
-          return;
-        }
-        // Convert Archive.org details URL → embed URL
+        if (!url) { console.warn('openFullscreenPDF called with empty URL'); return; }
         const embedUrl = url.includes('archive.org')
           ? url.replace('/details/', '/embed/')
           : url;
-        console.log('🔗 embedUrl that will be set on iframe =', embedUrl);
         PDF_TITLE.textContent = title || 'PDF Viewer';
         PDF_FRAME.src = embedUrl;
         VIEWER.classList.add('active');
       }
 
-      // -----------------------------------------------------------------
-      // Show modal and keep a copy of the payload
-      // -----------------------------------------------------------------
-      function showAdModal(item) {
-        // Store the *raw* Archive.org details URL.
-        pendingPayload = {
-          title: item.title || 'Untitled PDF',
-          url:   item.archive_url || ''
-        };
-        console.log('🟠 showAdModal → pendingPayload =', pendingPayload);
-        AD_MODAL.style.display = 'flex';
+      /* ----------------- Helper: render a set of cards ----------------- */
+      function renderCards(arr) {
+        FEED.innerHTML = '';
+        arr.forEach(item => createCard(item));
       }
 
-      // -----------------------------------------------------------------
-      // “Watch Ad” – send JSON payload to Android (with lock)
-      // -----------------------------------------------------------------
-      WATCH_BTN.addEventListener('click', () => {
-        AD_MODAL.style.display = 'none';
-
-        // If we already have an ad in progress, ignore the click.
-        if (adInProgress) {
-          console.warn('⚠️ Ad already in progress – ignoring Watch Ad click');
-          return;
-        }
-
-        if (window.Android && typeof Android.requestRewardedAd === 'function') {
-          adInProgress = true; // ← lock
-          const tag = JSON.stringify(pendingPayload);
-          console.log('→ requestRewardedAd(tag) =', tag);
-          Android.requestRewardedAd(tag);
-        } else {
-          console.log('❎ No Android bridge – opening PDF directly');
-          openFullscreenPDF(pendingPayload.title, pendingPayload.url);
-          pendingPayload = null;
-        }
-      });
-
-      // -----------------------------------------------------------------
-      // “Cancel” button – hide modal & discard payload
-      // -----------------------------------------------------------------
-      CANCEL_BTN.addEventListener('click', () => {
-        console.log('✖️ User cancelled – dropping pendingPayload');
-        AD_MODAL.style.display = 'none';
-        pendingPayload = null;
-        adInProgress = false; // unlock (in case a stray ad was pending)
-      });
-
-      // -----------------------------------------------------------------
-      // Data fetching & UI building (unchanged apart from logging)
-      // -----------------------------------------------------------------
-      async function fetchData() {
-        try {
-          console.log('📦 fetching data from backend →', BACKEND_URL);
-          const res  = await fetch(BACKEND_URL);
-          const data = await res.json();
-          LOADER.style.display = 'none';
-
-          if (!data || data.length === 0) {
-            FEED.innerHTML = "<p style='text-align:center;color:#94a3b8'>No PDFs found 😢</p>";
-            console.warn('⚠️ Backend returned empty array');
-            return;
-          }
-
-          allData = data.sort((a, b) => Number(b.id) - Number(a.id));
-          loadNextBatch();
-          window.addEventListener('scroll', handleScroll);
-        } catch (err) {
-          LOADER.style.display = 'none';
-          FEED.innerHTML = "<p style='text-align:center;color:#f87171'>Error loading data 😞</p>";
-          console.error('❌ fetchData error →', err);
-        }
-      }
-
-      function loadNextBatch() {
-        if (loadingMore) return;
-        loadingMore = true;
-
-        const nextBatch = allData.slice(currentIndex, currentIndex + BATCH_SIZE);
-        console.log('🔀 loading next batch – items', currentIndex, 'to', currentIndex + BATCH_SIZE);
-        nextBatch.forEach(item => createCard(item));
-
-        currentIndex += BATCH_SIZE;
-        loadingMore = false;
-
-        if (currentIndex >= allData.length) {
-          window.removeEventListener('scroll', handleScroll);
-        }
-      }
-
+      /* ----------------- Card creation (includes share) ----------------- */
       function createCard(item) {
         const card = document.createElement('div');
         card.className = 'card';
@@ -548,12 +348,31 @@
         preview.className = 'preview';
 
         if (item.archive_url && item.archive_url.includes('archive.org')) {
-          // Show the *embed* view in the preview (fast loading thumbnail)
           const embedUrl = item.archive_url.replace('/details/', '/embed/');
           preview.innerHTML = `<iframe src="${embedUrl}" allowfullscreen></iframe>`;
         } else {
           preview.textContent = 'No Preview Available';
         }
+
+        // Tiny share button (top‑right corner of preview)
+        const shareBtn = document.createElement('button');
+        shareBtn.className = 'share-btn';
+        shareBtn.title = 'Share';
+        shareBtn.textContent = '🔗';
+        shareBtn.addEventListener('click', e => {
+          e.stopPropagation();
+          const link = `https://yan-1-related-1.github.io/yan-1-website-shared-links-redirecting/all-pdfs-content-page-shared-links-redirecting.html?pdf_id=${encodeURIComponent(item.id)}`;
+          if (navigator.clipboard) {
+            navigator.clipboard.writeText(link).then(() => alert('Link copied to clipboard'))
+                                           .catch(() => prompt('Copy this link', link));
+          } else {
+            prompt('Copy this link', link);
+          }
+          if (navigator.share) {
+            navigator.share({ title: item.title, url: link }).catch(() => {});
+          }
+        });
+        preview.appendChild(shareBtn);
 
         const info = document.createElement('div');
         info.className = 'info';
@@ -565,42 +384,139 @@
         const openBtn = document.createElement('button');
         openBtn.className = 'open-btn';
         openBtn.textContent = 'Open PDF';
-        openBtn.onclick = () => showAdModal(item);
+        openBtn.onclick = () => {
+          if (item.archive_url) openFullscreenPDF(item.title || 'Untitled PDF', item.archive_url);
+          else console.warn('No archive URL for this PDF');
+        };
 
         card.append(preview, info, openBtn);
         FEED.appendChild(card);
       }
 
-      function handleScroll() {
-        const { scrollTop, scrollHeight, clientHeight } = document.documentElement;
-        if (scrollTop + clientHeight >= scrollHeight - 10) {
-          loadNextBatch();
+      /* ----------------- Data fetching & initial rendering ----------------- */
+      async function fetchData() {
+        try {
+          const res = await fetch(BACKEND_URL);
+          const data = await res.json();
+          LOADER.style.display = 'none';
+
+          if (!data || data.length === 0) {
+            FEED.innerHTML = "<p style='text-align:center;color:#94a3b8'>No PDFs found 😢</p>";
+            return;
+          }
+
+          allData = data.sort((a, b) => Number(b.id) - Number(a.id));
+
+          const params = new URLSearchParams(window.location.search);
+          const pdfId = params.get('pdf_id');
+          if (pdfId) {
+            const target = allData.find(it => String(it.id) === pdfId);
+            if (target) openFullscreenPDF(target.title || 'Untitled PDF', target.archive_url);
+            else { loadNextBatch(); window.addEventListener('scroll', handleScroll); }
+          } else {
+            loadNextBatch();
+            window.addEventListener('scroll', handleScroll);
+          }
+        } catch (err) {
+          LOADER.style.display = 'none';
+          FEED.innerHTML = "<p style='text-align:center;color:#f87171'>Error loading data 😞</p>";
+          console.error('fetchData error →', err);
         }
       }
 
-      // -----------------------------------------------------------------
-      // Viewer close handling
-      // -----------------------------------------------------------------
-      CLOSE_VIEWER.onclick = closeViewer;
-      document.addEventListener('keydown', e => {
-        if (e.key === 'Escape') closeViewer();
-      });
+      /* ----------------- Infinite scroll batch loading ----------------- */
+      function loadNextBatch() {
+        if (loadingMore) return;
+        loadingMore = true;
 
+        const batch = allData.slice(currentIndex, currentIndex + BATCH_SIZE);
+        batch.forEach(item => createCard(item));
+        currentIndex += BATCH_SIZE;
+        loadingMore = false;
+
+        if (currentIndex >= allData.length) window.removeEventListener('scroll', handleScroll);
+      }
+
+      function handleScroll() {
+        const { scrollTop, scrollHeight, clientHeight } = document.documentElement;
+        if (scrollTop + clientHeight >= scrollHeight - 10) loadNextBatch();
+      }
+
+      /* ----------------- Viewer close handling ----------------- */
       function closeViewer() {
         VIEWER.classList.remove('active');
         PDF_FRAME.src = '';
       }
+      CLOSE_VIEWER.onclick = closeViewer;
+      document.addEventListener('keydown', e => { if (e.key === 'Escape') closeViewer(); });
 
-      // -----------------------------------------------------------------
-      // Initialise – preload the rewarded ad (only when Android bridge exists)
-      // -----------------------------------------------------------------
-      document.addEventListener('DOMContentLoaded', () => {
-        if (window.Android && typeof Android.preloadRewardedAd === 'function') {
-          console.log('📢 pre‑loading rewarded ad');
-          Android.preloadRewardedAd();
-        } else {
-          console.log('🚫 Android bridge not present – running in a browser');
+      /* ----------------- Upload overlay handling ----------------- */
+      const uploadBtn = document.createElement('button');
+      uploadBtn.id = 'uploadBtn';
+      uploadBtn.className = 'upload-btn';
+      uploadBtn.textContent = 'Upload';
+      // Insert the upload button right before the toggle‑options button
+      document.querySelector('.search-wrapper').insertBefore(uploadBtn,
+          document.getElementById('toggleOptions'));
+
+      uploadBtn.addEventListener('click', () => {
+        UPLOAD_FRAME.src = 'pdfs_uploading.html';
+        UPLOAD_OVERLAY.classList.add('active');
+      });
+      CLOSE_UPLOAD.onclick = () => {
+        UPLOAD_FRAME.src = '';
+        UPLOAD_OVERLAY.classList.remove('active');
+      };
+
+      /* ----------------- Search handling ----------------- */
+      SEARCH_BTN.addEventListener('click', performSearch);
+      SEARCH_INPUT.addEventListener('keydown', e => { if (e.key === 'Enter') performSearch(); });
+
+      function performSearch() {
+        const term = SEARCH_INPUT.value.trim().toLowerCase();
+        const field = SEARCH_FIELD.value; // title | id | username
+
+        if (!term) { exitSearchMode(); return; }
+
+        let results = [];
+        if (field === 'title') {
+          results = allData.filter(it => (it.title || '').toLowerCase().includes(term));
+        } else if (field === 'id') {
+          results = allData.filter(it => String(it.id).toLowerCase() === term);
+        } else if (field === 'username') {
+          results = allData.filter(it => (it.username || '').toLowerCase().includes(term));
         }
+
+        searchMode = true;
+        renderCards(results);
+        BACK_BTN.classList.remove('hidden');
+        window.removeEventListener('scroll', handleScroll);
+      }
+
+      BACK_BTN.addEventListener('click', exitSearchMode);
+
+      function exitSearchMode() {
+        if (!searchMode) return;
+        searchMode = false;
+        SEARCH_INPUT.value = '';
+        BACK_BTN.classList.add('hidden');
+        SEARCH_OPTIONS.classList.add('hidden');
+        FEED.innerHTML = '';
+        currentIndex = 0;
+        loadNextBatch();
+        window.addEventListener('scroll', handleScroll);
+      }
+
+      /* ----------------- Toggle advanced search options ----------------- */
+      TOGGLE_BTN.addEventListener('click', () => {
+        SEARCH_OPTIONS.classList.toggle('hidden');
+      });
+      CLOSE_OPTIONS.addEventListener('click', () => {
+        SEARCH_OPTIONS.classList.add('hidden');
+      });
+
+      /* ----------------- Initialise ----------------- */
+      document.addEventListener('DOMContentLoaded', () => {
         fetchData();
       });
     })();
