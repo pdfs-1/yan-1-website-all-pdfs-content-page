@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Archive Upload App</title>
+  <style>
+    :root {
+      --bg: #0f1724;
+      --card: #111827;
+      --accent: #60a5fa;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --radius: 16px;
+      --transition: 0.3s ease;
+    }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 480px;
+      padding: 20px;
+    }
+
+    .card {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 20px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.3);
+      transition: var(--transition);
+    }
+
+    .hidden { display: none; }
+
+    input, button {
+      font-size: 1rem;
+      border: none;
+      outline: none;
+      border-radius: var(--radius);
+      transition: var(--transition);
+    }
+
+    input {
+      flex: 1;
+      padding: 12px 16px;
+      background: #1f2937;
+      color: var(--text);
+    }
+
+    input:focus {
+      background: #273549;
+      box-shadow: 0 0 0 2px var(--accent);
+    }
+
+    button {
+      background: var(--accent);
+      color: #fff;
+      cursor: pointer;
+      padding: 12px 16px;
+      font-weight: 500;
+    }
+
+    button:hover {
+      opacity: 0.9;
+      transform: scale(1.03);
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      margin-top: 15px;
+    }
+
+    .back-btn {
+      color: var(--accent);
+      cursor: pointer;
+      text-align: left;
+      margin-bottom: 15px;
+      font-size: 0.9rem;
+    }
+
+    .success, .error {
+      text-align: center;
+      font-weight: 500;
+      margin-top: 10px;
+    }
+
+    .success { color: #4ade80; }
+    .error   { color: #f87171; }
+
+    .animated { animation: fadeIn 0.5s ease forwards; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Viewer */
+    #viewerPage {
+      position: relative;
+    }
+
+    #viewerPage iframe {
+      width: 100%;
+      height: 80vh;
+      border: none;
+      border-radius: var(--radius);
+      background: #000;
+    }
+
+    #fullscreenBtn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: rgba(96,165,250,0.9);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 12px;
+      cursor: pointer;
+      font-weight: 600;
+      z-index: 10;
+    }
+
+    #fullscreenBtn:hover {
+      background: rgba(37,99,235,0.9);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+
+    <!-- Upload Page -->
+    <div id="uploadPage" class="card animated">
+      <form id="uploadForm">
+        <input type="url" id="archive_url" placeholder="Enter Archive.org URL" required />
+        <input type="text" id="title" placeholder="Enter Title" required />
+        <input type="text" id="username" placeholder="Enter Username" required />
+        <input type="tel" id="phone_number" placeholder="Enter Phone Number" required />
+        <button type="submit">📤 Post</button>
+      </form>
+      <div id="message"></div>
+    </div>
+
+    <!-- Viewer Page -->
+    <div id="viewerPage" class="card hidden animated">
+      <div class="back-btn" id="backToUpload">← Back to Upload</div>
+      <h3 id="viewerTitle"></h3>
+      <button id="fullscreenBtn">⛶ Full Screen</button>
+      <iframe id="viewerFrame" allowfullscreen></iframe>
+    </div>
+
+  </div>
+
+  <script>
+    // --------------------------------------------------------------
+    // Global constants & element references
+    // --------------------------------------------------------------
+    const API_BASE    = "https://pdfs_info_database.video-api-ajaiahar.workers.dev";
+
+    const uploadPage  = document.getElementById("uploadPage");
+    const viewerPage  = document.getElementById("viewerPage");
+    const form        = document.getElementById("uploadForm");
+    const message     = document.getElementById("message");
+    const viewerTitle = document.getElementById("viewerTitle");
+    const viewerFrame = document.getElementById("viewerFrame");
+    const backToUpload= document.getElementById("backToUpload");
+    const fullscreenBtn = document.getElementById("fullscreenBtn");
+
+    // --------------------------------------------------------------
+    // Upload handling
+    // --------------------------------------------------------------
+    form.onsubmit = async (e) => {
+      e.preventDefault();
+      message.textContent = "Uploading...";
+      message.className = "";
+
+      const archiveUrl = document.getElementById("archive_url").value.trim();
+
+      // Accept only archive.org/details URLs
+      if (!archiveUrl.startsWith("https://archive.org/details/")) {
+        message.textContent = "❌ Only archive.org/details URLs are allowed.";
+        message.className = "error";
+        return;
+      }
+
+      const data = {
+        archive_url: archiveUrl,
+        title: document.getElementById("title").value.trim(),
+        username: document.getElementById("username").value.trim(),
+        phone_number: document.getElementById("phone_number").value.trim()
+      };
+
+      try {
+        const res  = await fetch(`${API_BASE}/upload`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data)
+        });
+        const json = await res.json();
+
+        if (res.ok && json.success) {
+          message.textContent = "✅ Upload successful!";
+          message.className   = "success";
+
+          // Open viewer instantly
+          openViewer(archiveUrl, data.title);
+
+          form.reset();
+        } else {
+          message.textContent = `❌ Upload failed: ${json.error || "Server error"}`;
+          message.className = "error";
+        }
+      } catch {
+        message.textContent = "⚠️ Network error. Please try again.";
+        message.className = "error";
+      }
+    };
+
+    // --------------------------------------------------------------
+    // Viewer – open PDF instantly
+    // --------------------------------------------------------------
+    function openViewer(url, title) {
+      let viewerUrl = url;
+      if (url.includes("archive.org/details/")) {
+        viewerUrl = url.replace("/details/", "/embed/");
+      }
+      viewerTitle.textContent = title || "Viewer";
+      viewerFrame.src = viewerUrl;
+
+      uploadPage.classList.add("hidden");
+      viewerPage.classList.remove("hidden");
+    }
+
+    // --------------------------------------------------------------
+    // Back from viewer
+    // --------------------------------------------------------------
+    backToUpload.onclick = () => {
+      viewerPage.classList.add("hidden");
+      uploadPage.classList.remove("hidden");
+      viewerFrame.src = "";
+    };
+
+    // --------------------------------------------------------------
+    // Full‑screen button for the viewer
+    // --------------------------------------------------------------
+    fullscreenBtn.onclick = () => {
+      if (viewerFrame.requestFullscreen) viewerFrame.requestFullscreen();
+      else if (viewerFrame.webkitRequestFullscreen) viewerFrame.webkitRequestFullscreen();
+      else if (viewerFrame.msRequestFullscreen) viewerFrame.msRequestFullscreen();
+    };
+  </script>
+</body>
+</html>
